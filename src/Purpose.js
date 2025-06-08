@@ -16,8 +16,30 @@ import {
 } from './errors';
 
 /**
- * Definition of Purpose class.
+ * Defines the Purpose class.
  *
+ * A Purpose acts as a bridge between a Sandbox and a Perimeter.
+ * When a Perimeter is added to a Sandbox, a new Purpose is created.
+ * All methods exposed by the Perimeter are copied to this Purpose.
+ * It's designed to have a minimal set of methods.
+ * This class is used internally by {@link Sandbox} and typically not instantiated directly by consumers.
+ *
+ * @see Sandbox
+ * @see Perimeter
+ *
+ * @example
+ * // Purpose is used internally by Sandbox and usually not instantiated directly.
+ */
+export default class Purpose {
+  /**
+   * Creates a new instance of Purpose.
+   * @param {string} name - The name of the purpose.
+   * @param {Sandbox} sandbox - The sandbox instance associated with this purpose.
+   * @throws {ArgumentError} If the name is not a string or if the sandbox is not a valid Sandbox instance.
+   */
+  constructor(name, sandbox) {
+    this._name = name;
+    this._sandbox = sandbox;
  * Purpose is a connection between Sandbox and Perimeter.
  * Whenever a Perimeter is added to a Sandbox new Purpose is created.
  * And all exposed methods from Perimeter and copied to Purpose.
@@ -47,9 +69,13 @@ export default class Purpose {
   }
 
   /**
-   * Load perimeter & copy all exposed method into the purpose.
-   * This method is used internally by Sandbox and it is not recommended to use
-   * it externally.
+   * Loads a perimeter and copies all its exposed methods into this purpose.
+   * This method is used internally by {@link Sandbox} and should not be called externally.
+   * @param {Perimeter} perimeter - The perimeter to load.
+   * @throws {ArgumentError} If the provided perimeter is not a valid Perimeter instance.
+   * @throws {RestrictedMethodError} If an exposed method name is restricted.
+   * @throws {NoExposedMethodError} If an exposed method is not defined on the perimeter.
+   * @private
    */
   _loadPerimeter(perimeter) {
     if (!isPerimeter(perimeter)) {
@@ -90,8 +116,11 @@ export default class Purpose {
   }
 
   /**
-   * Return true if perimeter is allowed to perform an action. It uses the
-   * governess of the perimeter.
+   * Checks if the perimeter is allowed to perform an action.
+   * It uses the governess of the associated perimeter.
+   * @param {...*} args - Arguments to pass to the governess's `isAllowed` method.
+   * @return {boolean} True if the action is allowed, false otherwise.
+   * @see Governess#isAllowed
    */
   isAllowed(...args) {
     const perimeter = this._sandbox.getPerimeter(this._name);
@@ -102,15 +131,21 @@ export default class Purpose {
   }
 
   /**
-   * Return true if perimeter is not allowed to perform an action. It uses the
-   * governess of the perimeter.
+   * Checks if the perimeter is not allowed to perform an action.
+   * It uses the governess of the associated perimeter.
+   * @param {...*} args - Arguments to pass to the governess's `isAllowed` method.
+   * @return {boolean} True if the action is not allowed, false otherwise.
+   * @see Governess#isNotAllowed
    */
   isNotAllowed(...args) {
     return !this.isAllowed(...args);
   }
 
   /**
-   * Forward guard call to governess.
+   * Forwards the guard call to the governess of the associated perimeter.
+   * @param {...*} args - Arguments to pass to the governess's `guard` method.
+   * @return {*} The result of the governess's `guard` method.
+   * @see Governess#guard
    */
   guard(...args) {
     const perimeter = this._sandbox.getPerimeter(this._name);
